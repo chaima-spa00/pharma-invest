@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharma INVESTE SPA - تتبع إنتاجية العمال</title>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDQEhSZtIwfSUC3fSmbP_N0FRmloIk3yBM",
+        authDomain: "pharma-spa-db.firebaseapp.com",
+        databaseURL: "https://pharma-spa-db-default-rtdb.firebaseio.com",
+        projectId: "pharma-spa-db",
+        storageBucket: "pharma-spa-db.firebasestorage.app",
+        messagingSenderId: "347965129327",
+        appId: "1:347965129327:web:bf03de42a807be81bd839a"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      // Initialize Realtime Database and get a reference to the service
+      window.db = firebase.database();
+    </script>
+
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <!-- Dynamic Medical Animated Background -->
+        <ul class="medical-bg">
+            <li class="pill"></li>
+            <li class="cross"></li>
+            <li class="blister"></li>
+            <li class="molecule"></li>
+            <li class="cross"></li>
+            <li class="pill"></li>
+            <li class="blister"></li>
+            <li class="molecule"></li>
+            <li class="cross"></li>
+            <li class="blister"></li>
+        </ul>
+
+        <!-- Language Switcher -->
+        <div class="lang-switcher">
+            <button class="lang-btn active" id="btn-lang-ar" onclick="setLanguage('ar')">AR</button>
+            <button class="lang-btn" id="btn-lang-fr" onclick="setLanguage('fr')">FR</button>
+        </div>
+
+        <div class="login-card text-center">
+            <div class="brand" style="margin-bottom: 20px;">
+                <i class="fa-solid fa-file-medical logo-icon" style="font-size: 3rem; color: var(--color-blue);"></i>
+                <h1 style="color: white; margin-top: 10px;">Pharma <span class="accent-text">INVESTE</span></h1>
+            </div>
+            <i class="fa-solid fa-lock login-icon"
+                style="font-size: 2.5rem; color: var(--color-text-dim); margin-bottom: 10px;"></i>
+            <h2 style="margin-bottom: 10px;" data-i18n="login_title">تسجيل الدخول (Login)</h2>
+            <p style="margin-bottom: 20px; color: var(--color-text-dim);" data-i18n="login_desc">الوصول متاح فقط للمدراء
+                والمراقبين.<br>الرجاء مسح بطاقتك أو إدخال المعرف الخاص بك.</p>
+
+            <div id="login-qr-reader" style="width: 100%; max-width: 300px; margin: 10px auto;"></div>
+
+            <button class="btn btn-primary btn-block" id="btn-login-camera" onclick="startLoginScanner()"
+                style="margin-bottom: 15px;">
+                <i class="fa-solid fa-camera"></i> <span data-i18n="login_camera">تسجيل عبر الكاميرا (QR)</span>
+            </button>
+            <div class="form-group">
+                <input type="text" id="login-worker-id" class="form-control text-center"
+                    placeholder="أدخل معرفك (مثال: ADMIN)" style="font-weight: bold; letter-spacing: 1px;"
+                    onkeyup="if(event.key === 'Enter') handleLoginSubmit()">
+            </div>
+            <button class="btn btn-secondary btn-block" onclick="handleLoginSubmit()">
+                <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="login_enter">دخول</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div class="app-container" style="display: none;" id="main-app">
+
+        <!-- Sidebar Navigation (Desktop) / Bottom Nav (Mobile) -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-file-medical logo-icon"></i>
+                <span class="brand-name">Pharma <span class="accent-text">INVESTE SPA</span></span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" onclick="switchTab('dashboard')" data-role="directeur">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="#scanner" class="nav-item" onclick="switchTab('scanner')" data-role="controleur,directeur">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span>تسجيل العمل (QR)</span>
+                </a>
+                <a href="#control" class="nav-item" onclick="switchTab('control')" data-role="controleur,directeur">
+                    <i class="fa-solid fa-square-check"></i>
+                    <span>المراقبة والتأكيد</span>
+                </a>
+                <a href="#workers" class="nav-item" onclick="switchTab('workers')" data-role="directeur">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>إدارة العمال</span>
+                </a>
+                <a href="#logs" class="nav-item" onclick="switchTab('logs')" data-role="directeur">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>السجل العام</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>Pharma INVESTE SPA</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Top Bar / Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="page-title">لوحة الإحصائيات العامة</h1>
+                    <p class="current-date" id="live-date">تحميل التاريخ...</p>
+                </div>
+
+                <div class="user-status-widget" id="app-user-widget"
+                    style="margin-left: 15px; background: rgba(0,0,0,0.2);">
+                    <i class="fa-solid fa-user-shield status-icon text-blue"></i>
+                    <div class="status-details">
+                        <span class="status-label">المستخدم الحالي:</span>
+                        <span class="status-value" id="current-logged-user">غير مسجل</span>
+                    </div>
+                    <button class="logout-btn" onclick="logoutSystem()" style="display: block;">
+                        <i class="fa-solid fa-sign-out-alt"></i>
+                    </button>
+                </div>
+
+                <div class="user-status-widget" id="active-user-widget">
+                    <i class="fa-solid fa-user-clock status-icon"></i>
+                    <div class="status-details">
+                        <span class="status-label">جلسة المسح:</span>
+                        <span class="status-value" id="current-active-worker">لم يتم مسح أي رمز</span>
+                    </div>
+                    <button class="logout-btn" id="logout-worker-btn" style="display: none;"
+                        onclick="clearActiveWorker()">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Views Wrapper -->
+            <div class="views-container">
+
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="view-section active">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card line-gradient-blue">
+                            <div class="stat-icon-wrapper">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title">الأسطر المحضرة اليوم</span>
+                                <h2 class="stat-number" id="stat-lines-prepared">0</h2>
+                            </div>
+                        </div>
+                        <div class="stat-card line-gradient-green">
+                            <div class="stat-icon-wrapper">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title">الأسطر المراقبة اليوم</span>
+                                <h2 class="stat-number" id="stat-lines-controlled">0</h2>
+                            </div>
+                        </div>
+                        <div class="stat-card line-gradient-yellow">
+                            <div class="stat-icon-wrapper">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title font-small">أسطر في انتظار التأكيد</span>
+                                <h2 class="stat-number" id="stat-lines-pending">0</h2>
+                            </div>
+                        </div>
+                        <div class="stat-card line-gradient-purple">
+                            <div class="stat-icon-wrapper">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title">العمال الناشطون اليوم</span>
+                                <h2 class="stat-number" id="stat-active-workers-count">0</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Leaderboard Grid -->
+                    <div class="dashboard-grid">
+                        <!-- Chart Panel -->
+                        <div class="content-panel chart-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-chart-bar header-icon"></i>إنتاجية العمال اليوم (عدد الأسطر)
+                                </h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chart-productivity"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard Panel -->
+                        <div class="content-panel ranking-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-trophy header-icon text-yellow"></i>ترتيب المحضرين اليوم (Top
+                                    Préparateurs)</h3>
+                            </div>
+                            <div class="ranking-list" id="leaderboard-container">
+                                <p class="empty-state">لا توجد بيانات مسجلة لليوم بعد.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. SCANNER / LOG PRODUCTIVITY VIEW -->
+                <section id="view-scanner" class="view-section">
+                    <div class="scanner-grid">
+
+                        <!-- Camera & Scanning Area -->
+                        <div class="content-panel text-center">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-camera header-icon"></i>ماسح رمز QR لتعريف العامل</h3>
+                            </div>
+
+                            <!-- Scanner selection tabs (Camera vs Manual) -->
+                            <div class="scanner-toggle">
+                                <button id="btn-mode-camera" class="toggle-btn active"
+                                    onclick="setScannerMode('camera')">
+                                    <i class="fa-solid fa-camera"></i> الكاميرا
+                                </button>
+                                <button id="btn-mode-manual" class="toggle-btn" onclick="setScannerMode('manual')">
+                                    <i class="fa-solid fa-keyboard"></i> إدخال يدوي
+                                </button>
+                            </div>
+
+                            <div class="scanner-wrapper">
+                                <!-- Camera Scanner View -->
+                                <div id="camera-scanner-container">
+                                    <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
+                                    <div id="qr-reader-results"></div>
+                                    <p class="scanner-tip">وجه رمز الـ QR الخاص بك نحو الكاميرا ليتم قراءته تلقائياً.
+                                    </p>
+                                </div>
+
+                                <!-- Manual Simulation View -->
+                                <div id="manual-scanner-container" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="manual-worker-select">اختر العامل لتجربة النظام
+                                            (Simulation):</label>
+                                        <select id="manual-worker-select" class="form-control"
+                                            onchange="if(this.value) { handleWorkerIdentification(this.value); this.value = ''; }">
+                                            <option value="">-- اختر عاملاً --</option>
+                                            <!-- Dynamic workers list -->
+                                        </select>
+                                    </div>
+                                    <span class="or-separator">أو اكتب رمز العامل مباشرة:</span>
+                                    <div class="form-group-inline">
+                                        <input type="text" id="manual-worker-id" class="form-control"
+                                            placeholder="مثال: PHARMA-XXXXXX"
+                                            onkeyup="if(event.key === 'Enter') handleManualScanSubmit()">
+                                        <button class="btn btn-primary" onclick="handleManualScanSubmit()">تأكيد
+                                            الرمز</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Worker Form Area (Appears after successful scan) -->
+                        <div class="content-panel" id="worker-action-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-user-tag header-icon"></i>بيانات العامل والعملية</h3>
+                            </div>
+
+                            <!-- State: Not logged in -->
+                            <div class="empty-state-card" id="worker-scan-prompt">
+                                <i class="fa-solid fa-qrcode animated-pulse"></i>
+                                <h4>في انتظار مسح رمز الـ QR الخاص بالعامل</h4>
+                                <p>يرجى استخدام الكاميرا أو القائمة اليدوية على اليمين لتسجيل الدخول.</p>
+                            </div>
+
+                            <!-- State: Logged in (Forms) -->
+                            <div id="worker-scan-result" style="display: none;">
+                                <div class="worker-badge">
+                                    <div class="worker-avatar">
+                                        <i class="fa-solid fa-user-circle"></i>
+                                    </div>
+                                    <div class="worker-meta">
+                                        <h4 id="scanned-worker-name">أحمد بن محمد</h4>
+                                        <span id="scanned-worker-role" class="badge badge-preparator">مُحضِّر
+                                            (Préparateur)</span>
+                                        <p id="scanned-worker-id-display">المعرف: PHARMA-123456</p>
+                                    </div>
+                                </div>
+
+                                <!-- FORM FOR PREPARATEUR -->
+                                <div id="form-preparateur" class="worker-action-form" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="prep-lines-count"><i class="fa-solid fa-list-ol"></i> عدد الأسطر
+                                            المحضرة (Nombre de lignes):</label>
+                                        <input type="number" id="prep-lines-count" class="form-control" min="1"
+                                            placeholder="أدخل عدد الأسطر المنجزة...">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="prep-order-ref"><i class="fa-solid fa-receipt"></i> رقم الطلبية (أو
+                                            امسح QR الطلبية):</label>
+                                        <input type="text" id="prep-order-ref" class="form-control"
+                                            placeholder="مثال: Cmd-2026-004 أو امسح كود الطلبية...">
+                                        <span id="scanned-order-badge" class="badge"
+                                            style="display: none; margin-top: 5px; background-color: var(--color-green-glow); color: var(--color-green); border: 1px solid var(--color-green); align-self: flex-start; padding: 4px 10px; border-radius: 6px;"></span>
+                                    </div>
+
+                                    <button class="btn btn-success btn-block btn-large" onclick="submitPreparation()">
+                                        <i class="fa-solid fa-save"></i> تسجيل وتأكيد العملية
+                                    </button>
+                                </div>
+
+                                <!-- NOTIFICATION FOR CONTROLEUR -->
+                                <div id="form-controleur-info" class="worker-action-form text-center"
+                                    style="display: none;">
+                                    <div class="info-alert info-alert-purple">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                        <p>مرحباً بك بصفتك <strong>مُراقِباً (Contrôleur)</strong>.</p>
+                                    </div>
+                                    <button class="btn btn-purple btn-large btn-block" style="margin-bottom: 20px;"
+                                        onclick="switchTab('control')">
+                                        <i class="fa-solid fa-square-check"></i> الانتقال لجدول المراقبة
+                                    </button>
+
+                                    <!-- DELEGATE SECTION (RULE 3) -->
+                                    <div class="controller-delegate-section"
+                                        style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; text-align: right;">
+                                        <h4 style="margin-bottom: 10px; color: var(--color-teal);"><i
+                                                class="fa-solid fa-people-arrows"></i> تسجيل عملية لصالح محضر تابع لك
+                                        </h4>
+                                        <div class="form-group">
+                                            <label for="delegate-preparateur">اختر المحضر:</label>
+                                            <select id="delegate-preparateur" class="form-control">
+                                                <!-- Populated dynamically -->
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="delegate-lines-count">عدد الأسطر المحضرة:</label>
+                                            <input type="number" id="delegate-lines-count" class="form-control" min="1"
+                                                placeholder="أدخل عدد الأسطر...">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="delegate-order-ref">رقم الطلبية:</label>
+                                            <input type="text" id="delegate-order-ref" class="form-control"
+                                                placeholder="رقم الطلبية...">
+                                        </div>
+                                        <button class="btn btn-success btn-block"
+                                            onclick="submitDelegatedPreparation()">
+                                            <i class="fa-solid fa-save"></i> تسجيل العملية عن المحضر
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 3. QUALITY CONTROL / VALIDATION VIEW -->
+                <section id="view-control" class="view-section">
+                    <div class="content-panel">
+                        <div class="panel-header header-between">
+                            <h3><i class="fa-solid fa-clipboard-list header-icon text-yellow"></i>العمليات الجاهزة
+                                للمراقبة (قيد الانتظار)</h3>
+                            <div class="control-actions">
+                                <span class="selected-count-badge" id="selected-tasks-count">المحدد: 0</span>
+                                <button class="btn btn-success" id="btn-approve-selected"
+                                    onclick="approveSelectedTasks()" disabled>
+                                    <i class="fa-solid fa-check-double"></i> تأكيد العمليات المحددة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Active Controller Banner -->
+                        <div class="active-controller-banner" id="active-controller-banner">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>المراقب الحالي: <strong id="active-controller-name">لا يوجد مراقب نشط</strong> (يرجى
+                                تسجيل الدخول كـ Contrôleur عبر مسح الـ QR أولاً لتتمكن من التأكيد)</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">
+                                            <input type="checkbox" id="select-all-tasks"
+                                                onchange="toggleSelectAllTasks(this)">
+                                        </th>
+                                        <th>الوقت والتاريخ</th>
+                                        <th>المُحضِّر</th>
+                                        <th>رقم الطلبية</th>
+                                        <th>عدد الأسطر</th>
+                                        <th>حالة العملية</th>
+                                        <th>المراقب</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pending-tasks-table-body">
+                                    <tr>
+                                        <td colspan="7" class="empty-table-state">لا توجد عمليات تحضير معلقة حالياً.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. WORKER MANAGEMENT VIEW -->
+                <section id="view-workers" class="view-section">
+                    <div class="scanner-grid">
+
+                        <!-- Register Worker Form -->
+                        <div class="content-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-user-plus header-icon"></i>إضافة عامل جديد في النظام</h3>
+                            </div>
+
+                            <form id="add-worker-form" onsubmit="handleAddWorker(event)">
+                                <div class="form-group">
+                                    <label for="worker-name">اسم العامل بالكامل:</label>
+                                    <input type="text" id="worker-name" class="form-control" required
+                                        placeholder="مثال: محمد أحمد">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="worker-role">دور العامل (الوظيفة):</label>
+                                    <select id="worker-role" class="form-control" required
+                                        onchange="toggleAssignedController(this)">
+                                        <option value="directeur">مدير (Directeur)</option>
+                                        <option value="preparateur">مُحضِّر (Préparateur)</option>
+                                        <option value="controleur">مُراقِب (Contrôleur)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="assign-controller-group">
+                                    <label for="worker-assigned-controller">المراقب المسؤول عن هذا المحضر:</label>
+                                    <select id="worker-assigned-controller" class="form-control">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+
+                                <div class="form-group"
+                                    style="flex-direction: row; gap: 10px; align-items: center; justify-content: flex-start;">
+                                    <input type="checkbox" id="use-custom-id" onchange="toggleCustomIdInput(this)"
+                                        style="width: auto; cursor: pointer;">
+                                    <label for="use-custom-id" style="margin-bottom: 0; cursor: pointer;">أريد إدخال
+                                        معرف مخصص يدويًا (رقم بطاقته الحالية)</label>
+                                </div>
+
+                                <div class="form-group" id="custom-id-group" style="display: none;">
+                                    <label for="worker-custom-id">معرف العامل المخصص (ID):</label>
+                                    <input type="text" id="worker-custom-id" class="form-control"
+                                        placeholder="مثال: EMP-105">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa-solid fa-plus-circle"></i> تسجيل العامل وتوليد الـ QR
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Workers List -->
+                        <div class="content-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-users-viewfinder header-icon"></i>قائمة العمال ورموز الـ QR
+                                </h3>
+                            </div>
+
+                            <div class="table-responsive max-height-panel">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>الاسم</th>
+                                            <th>الوظيفة</th>
+                                            <th>المعرف</th>
+                                            <th>بطاقة الـ QR</th>
+                                            <th>إجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="workers-list-table-body">
+                                        <!-- Dynamic workers will be added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 5. DETAILED LOG HISTORY VIEW -->
+                <section id="view-logs" class="view-section">
+                    <div class="content-panel">
+                        <div class="panel-header header-between">
+                            <h3><i class="fa-solid fa-database header-icon text-teal"></i>السجل الكامل للعمليات
+                                والإنتاجية</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="exportLogsToCSV()">
+                                    <i class="fa-solid fa-file-csv"></i> تصدير البيانات (CSV)
+                                </button>
+                                <button class="btn btn-danger" onclick="confirmResetDatabase()">
+                                    <i class="fa-solid fa-trash-can"></i> إرجاع ضبط المصنع
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Simple Filter bar -->
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label for="filter-date">اليوم:</label>
+                                <input type="date" id="filter-date" class="form-control" onchange="applyFilters()">
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-worker">العامل:</label>
+                                <select id="filter-worker" class="form-control" onchange="applyFilters()">
+                                    <option value="">الكل</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-status">الحالة:</label>
+                                <select id="filter-status" class="form-control" onchange="applyFilters()">
+                                    <option value="">الكل</option>
+                                    <option value="pending">في انتظار المراقبة</option>
+                                    <option value="controlled">تمت مراقبتها</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>المعرف</th>
+                                        <th>الوقت والتاريخ</th>
+                                        <th>المُحضِّر</th>
+                                        <th>رقم الطلبية</th>
+                                        <th>عدد الأسطر</th>
+                                        <th>حالة العملية</th>
+                                        <th>المراقب المسؤول</th>
+                                        <th>إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="full-logs-table-body">
+                                    <!-- Dynamic log rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- QR CARD PRINT MODAL -->
+    <div class="modal" id="qr-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>بطاقة التعريف الذكية للعامل</h3>
+                <button class="close-btn" onclick="closeQRModal()">&times;</button>
+            </div>
+            <div class="modal-body text-center" id="printable-qr-area">
+                <div class="qr-print-card">
+                    <div class="qr-card-logo">
+                        <i class="fa-solid fa-file-medical"></i>
+                        <span>Pharma INVESTE SPA</span>
+                    </div>
+                    <h3 id="modal-worker-name" class="qr-card-name">اسم العامل</h3>
+                    <span id="modal-worker-role" class="badge qr-card-role">الدور (Role)</span>
+
+                    <div class="qr-code-box" id="modal-qr-container"></div>
+
+                    <p class="qr-card-id" id="modal-worker-id-code">PHARMA-XXXXXX</p>
+                    <p class="qr-card-footer">قم بمسح هذا الرمز لتسجيل أسطر التحضير أو لتأكيد الطلبيات.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="printQRCode()"><i class="fa-solid fa-print"></i> طباعة
+                    البطاقة</button>
+                <button class="btn btn-secondary" onclick="closeQRModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Libraries CDNs (loaded at bottom to not block page render) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <!-- Custom Script -->
+
+    <script src="app.js"></script>
+</body>
+
+</html>
