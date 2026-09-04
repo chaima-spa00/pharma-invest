@@ -114,7 +114,8 @@ function handleLoginSubmit() {
 }
 
 function processLoginCode(code) {
-    const user = workers.find(w => w.id.toUpperCase() === code.toUpperCase());
+    const cleanCode = code.trim();
+    const user = workers.find(w => w.id.toUpperCase() === cleanCode.toUpperCase());
     if (!user) {
         alert("المعرف غير مسجل في النظام.");
         return;
@@ -208,7 +209,7 @@ function logoutSystem() {
 function saveDatabase() {
     localStorage.setItem("pharma_workers", JSON.stringify(workers));
     localStorage.setItem("pharma_operations", JSON.stringify(operations));
-    
+
     // Save to Firebase (this will automatically trigger .on('value') for everyone else)
     if (window.db) {
         window.db.ref('pharma_workers').set(workers);
