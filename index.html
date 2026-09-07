@@ -35,8 +35,37 @@
 </head>
 
 <body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-container">
+        <div class="splash-content">
+
+            <!-- Pure CSS Pharma Invest Logo -->
+            <div class="css-logo-wrap">
+                <div class="css-logo-symbol">
+                    <!-- Green stripes forming the P body -->
+                    <div class="p-stripes">
+                        <span></span><span></span><span></span>
+                        <span></span><span></span><span></span>
+                    </div>
+                    <!-- Red arc forming the right curve of P -->
+                    <div class="p-red-arc"></div>
+                    <!-- Green dot at top -->
+                    <div class="p-dot"></div>
+                    <!-- SPA label -->
+                    <span class="p-spa-label">SPA</span>
+                </div>
+                <div class="css-logo-text">
+                    <span class="logo-pharma">Pharma</span>
+                    <span class="logo-invest">Invest</span>
+                </div>
+            </div>
+
+            <div class="splash-loader"></div>
+        </div>
+    </div>
+
     <!-- Login Screen -->
-    <div id="login-screen" class="login-container">
+    <div id="login-screen" class="login-container" style="display: none;">
         <!-- Dynamic Medical Animated Background -->
         <ul class="medical-bg">
             <li class="pill"></li>
@@ -571,6 +600,45 @@
 
             </div>
         </main>
+    </div>
+
+    <!-- EDIT WORKER MODAL -->
+    <div class="modal" id="edit-worker-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تعديل دور وبيانات العامل</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-worker-id">
+                <div class="info-alert info-alert-purple" style="margin-bottom:15px; font-size:0.9rem;">
+                    <i class="fa-solid fa-circle-info"></i> رمز الاستجابة السريعة (QR Code) سيبقى نفسه ولن يتغير، ويمكن
+                    للعامل الدخول به بناءً على دوره الجديد.
+                </div>
+                <div class="form-group">
+                    <label for="edit-worker-name">الاسم:</label>
+                    <input type="text" id="edit-worker-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-worker-role">الوظيفة الجديدة:</label>
+                    <select id="edit-worker-role" class="form-control" onchange="toggleEditAssignedController(this)">
+                        <option value="directeur">مدير (Directeur)</option>
+                        <option value="preparateur">مُحضِّر (Préparateur)</option>
+                        <option value="controleur">مُراقِب (Contrôleur)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="edit-assign-controller-group" style="display: none;">
+                    <label for="edit-worker-assigned-controller">المراقب المسؤول عن هذا المحضر:</label>
+                    <select id="edit-worker-assigned-controller" class="form-control">
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="saveWorkerEdit()"><i class="fa-solid fa-save"></i> حفظ
+                    التعديل</button>
+                <button class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
+            </div>
+        </div>
     </div>
 
     <!-- QR CARD PRINT MODAL -->

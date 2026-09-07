@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 340" width="300" height="340">
+  <!-- Green thin curved lines forming the P body -->
+  <g stroke="#2e8b3a" stroke-linecap="round" fill="none">
+    <!-- Green parallel strokes forming the left side of P -->
+    <path d="M 90 40 C 60 80, 55 160, 75 260" stroke-width="3.5"/>
+    <path d="M 100 38 C 68 78, 63 158, 83 258" stroke-width="3.5"/>
+    <path d="M 110 36 C 76 76, 71 156, 91 256" stroke-width="3.5"/>
+    <path d="M 120 34 C 84 74, 79 154, 99 254" stroke-width="3.5"/>
+    <path d="M 130 33 C 92 72, 87 152, 107 252" stroke-width="3.5"/>
+    <path d="M 140 33 C 100 70, 95 150, 115 250" stroke-width="3.5"/>
+    <!-- Green arc forming top of P -->
+    <path d="M 90 40 Q 190 20 210 90 Q 220 140 150 170" stroke-width="5" fill="none"/>
+    <!-- Green circle at top -->
+    <circle cx="95" cy="32" r="10" fill="#2e8b3a" stroke="none"/>
+  </g>
+
+  <!-- Red bold curve on the right side of P -->
+  <path d="M 148 170 C 210 175, 250 130, 230 75 C 215 30, 155 10, 95 32"
+        stroke="#c0392b" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+  <!-- Text: SPA in red small caps top-right -->
+  <text x="210" y="58" font-family="Arial, sans-serif" font-weight="700"
+        font-size="22" fill="#c0392b" letter-spacing="2">SPA</text>
+
+  <!-- Text: Pharma in black bold -->
+  <text x="72" y="305" font-family="Arial Black, Arial, sans-serif" font-weight="900"
+        font-size="52" fill="#1a1a1a" letter-spacing="-1">Pharma</text>
+
+  <!-- Text: Invest in black bold -->
+  <text x="90" y="355" font-family="Arial Black, Arial, sans-serif" font-weight="900"
+        font-size="48" fill="#1a1a1a" letter-spacing="-1">Invest</text>
+</svg>

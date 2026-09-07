@@ -1400,8 +1400,9 @@ body {
     height: 35px;
     background: var(--color-purple);
     position: relative;
-    border-radius: 50%; /* Circle shape */
-    box-shadow: inset -3px -3px 8px rgba(0,0,0,0.2), 0 5px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    /* Circle shape */
+    box-shadow: inset -3px -3px 8px rgba(0, 0, 0, 0.2), 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 .cross::after {
@@ -1469,7 +1470,7 @@ body {
     height: 8px;
     border-radius: 50%;
     background: var(--color-teal);
-    box-shadow: 
+    box-shadow:
         12px 0 0 var(--color-teal),
         0 16px 0 var(--color-teal),
         12px 16px 0 var(--color-teal),
@@ -1478,16 +1479,71 @@ body {
 }
 
 /* Positioning & Animation Speed */
-.medical-bg li:nth-child(1) { left: 15%; animation-delay: 0s; animation-duration: 22s; }
-.medical-bg li:nth-child(2) { left: 85%; animation-delay: 2s; animation-duration: 15s; }
-.medical-bg li:nth-child(3) { left: 45%; animation-delay: 5s; animation-duration: 18s; transform: scale(0.6); }
-.medical-bg li:nth-child(4) { left: 10%; animation-delay: 1s; animation-duration: 12s; }
-.medical-bg li:nth-child(5) { left: 70%; animation-delay: 7s; animation-duration: 25s; transform: scale(1.2); filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
-.medical-bg li:nth-child(6) { left: 30%; animation-delay: 4s; animation-duration: 20s; }
-.medical-bg li:nth-child(7) { left: 65%; animation-delay: 0s; animation-duration: 19s; transform: scale(0.8); }
-.medical-bg li:nth-child(8) { left: 90%; animation-delay: 3s; animation-duration: 14s; }
-.medical-bg li:nth-child(9) { left: 20%; animation-delay: 6s; animation-duration: 16s; transform: scale(0.9); }
-.medical-bg li:nth-child(10) { left: 55%; animation-delay: 2s; animation-duration: 21s; transform: scale(1.1); }
+.medical-bg li:nth-child(1) {
+    left: 15%;
+    animation-delay: 0s;
+    animation-duration: 22s;
+}
+
+.medical-bg li:nth-child(2) {
+    left: 85%;
+    animation-delay: 2s;
+    animation-duration: 15s;
+}
+
+.medical-bg li:nth-child(3) {
+    left: 45%;
+    animation-delay: 5s;
+    animation-duration: 18s;
+    transform: scale(0.6);
+}
+
+.medical-bg li:nth-child(4) {
+    left: 10%;
+    animation-delay: 1s;
+    animation-duration: 12s;
+}
+
+.medical-bg li:nth-child(5) {
+    left: 70%;
+    animation-delay: 7s;
+    animation-duration: 25s;
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+}
+
+.medical-bg li:nth-child(6) {
+    left: 30%;
+    animation-delay: 4s;
+    animation-duration: 20s;
+}
+
+.medical-bg li:nth-child(7) {
+    left: 65%;
+    animation-delay: 0s;
+    animation-duration: 19s;
+    transform: scale(0.8);
+}
+
+.medical-bg li:nth-child(8) {
+    left: 90%;
+    animation-delay: 3s;
+    animation-duration: 14s;
+}
+
+.medical-bg li:nth-child(9) {
+    left: 20%;
+    animation-delay: 6s;
+    animation-duration: 16s;
+    transform: scale(0.9);
+}
+
+.medical-bg li:nth-child(10) {
+    left: 55%;
+    animation-delay: 2s;
+    animation-duration: 21s;
+    transform: scale(1.1);
+}
 
 @keyframes animateMedical {
     0% {
@@ -1565,4 +1621,244 @@ body {
         display: flex;
         justify-content: center;
     }
+}
+
+/* ==========================================================================
+   SPLASH SCREEN
+   ========================================================================== */
+.splash-container {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: linear-gradient(135deg, hsl(222, 47%, 6%) 0%, hsl(222, 47%, 12%) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2rem;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.splash-container.hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    animation: splashZoomIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes splashZoomIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+
+    60% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.splash-logo {
+    width: 110px;
+    height: 110px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, var(--color-teal), hsl(190, 100%, 38%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 60px var(--color-teal-glow), 0 0 120px hsla(180, 100%, 42%, 0.12);
+    animation: splashPulseGlow 1.5s ease-in-out infinite alternate;
+}
+
+.splash-logo i {
+    font-size: 3.5rem;
+    color: #fff;
+}
+
+@keyframes splashPulseGlow {
+    from {
+        box-shadow: 0 0 30px var(--color-teal-glow);
+    }
+
+    to {
+        box-shadow: 0 0 80px var(--color-teal), 0 0 150px var(--color-teal-glow);
+    }
+}
+
+.splash-brand {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.splash-loader {
+    width: 60px;
+    height: 4px;
+    background: hsla(142, 60%, 35%, 0.25);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 10px;
+}
+
+.splash-loader::after {
+    content: '';
+    position: absolute;
+    left: -50%;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, transparent, #2a9d3e, transparent);
+    animation: splashSweep 1s linear infinite;
+    border-radius: 4px;
+}
+
+@keyframes splashSweep {
+    0% {
+        left: -50%;
+    }
+
+    100% {
+        left: 150%;
+    }
+}
+
+/* ==========================================================================
+   PURE CSS PHARMA INVEST LOGO
+   ========================================================================== */
+.css-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.css-logo-symbol {
+    position: relative;
+    width: 90px;
+    height: 120px;
+    flex-shrink: 0;
+}
+
+/* Green parallel vertical stripes = body of the P letter */
+.p-stripes {
+    position: absolute;
+    top: 14px;
+    left: 6px;
+    width: 50px;
+    height: 104px;
+    display: flex;
+    gap: 5.5px;
+    transform: skewX(-3deg);
+}
+
+.p-stripes span {
+    display: block;
+    width: 4.5px;
+    border-radius: 4px;
+    background: linear-gradient(to bottom, #34a853, #1e7e34);
+    flex-shrink: 0;
+}
+
+.p-stripes span:nth-child(1) {
+    height: 100%;
+}
+
+.p-stripes span:nth-child(2) {
+    height: 93%;
+    margin-top: 4px;
+}
+
+.p-stripes span:nth-child(3) {
+    height: 86%;
+    margin-top: 8px;
+}
+
+.p-stripes span:nth-child(4) {
+    height: 79%;
+    margin-top: 12px;
+}
+
+.p-stripes span:nth-child(5) {
+    height: 72%;
+    margin-top: 16px;
+}
+
+.p-stripes span:nth-child(6) {
+    height: 65%;
+    margin-top: 20px;
+}
+
+/* Red bold arc = the bowl of the P */
+.p-red-arc {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    width: 72px;
+    height: 76px;
+    border-radius: 50%;
+    border: 13px solid transparent;
+    border-right-color: #c0392b;
+    border-bottom-color: #c0392b;
+    transform: rotate(-50deg);
+}
+
+/* Green filled circle = dot on top of the P */
+.p-dot {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #34a853;
+    box-shadow: 0 0 10px #2a9d3e99;
+}
+
+/* SPA label top-right */
+.p-spa-label {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    font-family: Arial, sans-serif;
+    font-size: 0.62rem;
+    font-weight: 900;
+    color: #c0392b;
+    letter-spacing: 2.5px;
+}
+
+/* Pharma Invest text */
+.css-logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    gap: 2px;
+}
+
+.logo-pharma {
+    font-family: 'Arial Black', Impact, 'Arial', sans-serif;
+    font-weight: 900;
+    font-size: 2rem;
+    color: #ffffff;
+    letter-spacing: -1px;
+}
+
+.logo-invest {
+    font-family: 'Arial Black', Impact, 'Arial', sans-serif;
+    font-weight: 900;
+    font-size: 1.75rem;
+    color: #eeeeee;
+    letter-spacing: -0.5px;
 }

@@ -21,15 +21,25 @@ const defaultOperations = [];
 // INITIALIZATION
 // ==========================================================================
 document.addEventListener("DOMContentLoaded", () => {
+    // === SPLASH SCREEN ===
+    const splash = document.getElementById("splash-screen");
+
+    // Initialize immediately in background
     initDatabase();
     initDateTime();
     renderAllViews();
 
-    // System Auth Check
-    checkSystemLogin();
-
-    // Automatically load active worker session if present
-    loadActiveWorkerSession();
+    // Hide splash after 3 seconds then show login
+    setTimeout(() => {
+        splash.classList.add("hide");
+        setTimeout(() => {
+            splash.style.display = "none";
+            // System Auth Check (show login or app)
+            checkSystemLogin();
+            // Automatically load active worker session if present
+            loadActiveWorkerSession();
+        }, 600); // wait for fade-out transition
+    }, 3000); // 3 seconds splash duration
 });
 
 // Initialize database from LocalStorage or load default mock data
@@ -1225,9 +1235,14 @@ function renderWorkersTable() {
                     </button>
                 </td>
                 <td>
-                    <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteWorker('${w.id}')">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openEditWorkerModal('${w.id}')" title="تعديل بيانات العامل (تغيير الدور)">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteWorker('${w.id}')" title="حذف العامل">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -1250,6 +1265,87 @@ function deleteWorker(workerId) {
         saveDatabase();
         renderAllViews();
     }
+}
+
+// ==========================================================================
+// EDIT WORKER (Modify Role while keeping the same QR Code)
+// ==========================================================================
+function openEditWorkerModal(workerId) {
+    const worker = workers.find(w => w.id === workerId);
+    if (!worker) return;
+
+    if (activeWorker && activeWorker.id === workerId) {
+        alert("لا يمكن تعديل بيانات العامل المسجل دخوله حالياً. يرجى تسجيل الخروج أولاً.");
+        return;
+    }
+
+    document.getElementById("edit-worker-id").value = worker.id;
+    document.getElementById("edit-worker-name").value = worker.name;
+    document.getElementById("edit-worker-role").value = worker.role;
+
+    // Populate controllers for the edit modal (exclude the worker themselves if they are a controller)
+    const controllerSelect = document.getElementById("edit-worker-assigned-controller");
+    const controllers = workers.filter(w => w.role === 'controleur' && w.id !== worker.id);
+    controllerSelect.innerHTML = '<option value="">-- اختر مراقباً --</option>' +
+        controllers.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+
+    if (worker.role === 'preparateur' && worker.controllerId) {
+        controllerSelect.value = worker.controllerId;
+        document.getElementById("edit-assign-controller-group").style.display = "block";
+    } else {
+        document.getElementById("edit-assign-controller-group").style.display = "none";
+    }
+
+    document.getElementById("edit-worker-modal").classList.add("active");
+}
+
+function closeEditModal() {
+    document.getElementById("edit-worker-modal").classList.remove("active");
+}
+
+function toggleEditAssignedController(select) {
+    const group = document.getElementById("edit-assign-controller-group");
+    if (select.value === 'preparateur') {
+        group.style.display = "block";
+    } else {
+        group.style.display = "none";
+    }
+}
+
+function saveWorkerEdit() {
+    const workerId = document.getElementById("edit-worker-id").value;
+    const newName = document.getElementById("edit-worker-name").value.trim();
+    const newRole = document.getElementById("edit-worker-role").value;
+    const newControllerId = document.getElementById("edit-worker-assigned-controller").value;
+
+    const workerIndex = workers.findIndex(w => w.id === workerId);
+    if (workerIndex === -1) return;
+
+    if (!newName) {
+        alert("يرجى إدخال اسم العامل");
+        return;
+    }
+
+    if (newRole === 'preparateur') {
+        if (!newControllerId) {
+            alert("يرجى اختيار المراقب المسؤول عن هذا المحضر.");
+            return;
+        }
+
+        const assignedCount = workers.filter(w => w.role === 'preparateur' && w.controllerId === newControllerId && w.id !== workerId).length;
+        if (assignedCount >= 4) {
+            alert("خطأ: هذا المراقب مسؤول بالفعل عن 4 محاضر (الحد الأقصى). يرجى اختيار مراقب آخر.");
+            return;
+        }
+    }
+
+    workers[workerIndex].name = newName;
+    workers[workerIndex].role = newRole;
+    workers[workerIndex].controllerId = newRole === 'preparateur' ? newControllerId : null;
+
+    saveDatabase();
+    renderAllViews();
+    closeEditModal();
 }
 
 // QR Modal Control
