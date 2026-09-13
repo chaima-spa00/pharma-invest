@@ -104,7 +104,7 @@ function checkSystemLogin() {
     if (saved) {
         const user = JSON.parse(saved);
         const exists = workers.find(w => w.id === user.id);
-        if (exists && (exists.role === 'directeur' || exists.role === 'controleur')) {
+        if (exists) {
             setupSystemUser(exists);
             return;
         } else {
@@ -128,11 +128,6 @@ function processLoginCode(code) {
     const user = workers.find(w => w.id.toUpperCase() === cleanCode.toUpperCase());
     if (!user) {
         alert("المعرف غير مسجل في النظام.");
-        return;
-    }
-
-    if (user.role === 'preparateur') {
-        alert("عذراً، المحضر ليس لديه صلاحية الدخول للنظام.");
         return;
     }
 
@@ -173,7 +168,12 @@ function setupSystemUser(user) {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("main-app").style.display = "flex";
 
-    document.getElementById("current-logged-user").innerHTML = `${user.name} <span class="badge ${user.role === 'directeur' ? 'badge-preparator' : 'badge-controleur'}">${user.role === 'directeur' ? 'مدير' : 'مراقب'}</span>`;
+    let roleBadge = 'badge-preparator';
+    let roleText = 'محضّر';
+    if (user.role === 'directeur') { roleBadge = 'badge-success'; roleText = 'مدير'; }
+    else if (user.role === 'controleur') { roleBadge = 'badge-controleur'; roleText = 'مراقب'; }
+
+    document.getElementById("current-logged-user").innerHTML = `${user.name} <span class="badge ${roleBadge}">${roleText}</span>`;
 
     // Filter Navigation Menu Based on Role
     const navItems = document.querySelectorAll(".nav-item");
@@ -192,8 +192,8 @@ function setupSystemUser(user) {
     });
 
     // Auto-login active worker logic if current mapped to it
-    if (user.role === 'controleur') {
-        // Log in the controller into the worker session automatically
+    if (user.role === 'controleur' || user.role === 'directeur') {
+        // Log in the controller or directeur into the worker session automatically
         setupActiveWorker(user);
     }
 
@@ -307,8 +307,8 @@ function switchTab(tabId) {
 function renderStats() {
     const today = new Date().toDateString();
 
-    // Filter operations today
-    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today);
+    // Filter operations today (exclude ones just created by directeur without a preparateur yet)
+    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today && op.status !== 'created' && op.workerId);
 
     // Lines prepared today
     const linesPrepared = opsToday.reduce((sum, op) => sum + op.lines, 0);
@@ -340,7 +340,7 @@ function renderLeaderboard() {
     if (!container) return;
 
     const today = new Date().toDateString();
-    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today);
+    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today && op.status !== 'created' && op.workerId);
 
     // Aggregate lines per worker
     const workerStats = {};
@@ -416,7 +416,7 @@ function renderCharts() {
     }
 
     const today = new Date().toDateString();
-    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today);
+    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today && op.status !== 'created' && op.workerName);
 
     // Sum lines per worker for chart
     const dataMap = {};
@@ -517,7 +517,13 @@ function setupActiveWorker(worker) {
     // Update Header Status Widget
     const statusVal = document.getElementById("current-active-worker");
     const logoutBtn = document.getElementById("logout-worker-btn");
-    statusVal.innerHTML = `${worker.name} <span class="badge ${worker.role === 'preparateur' ? 'badge-preparator' : 'badge-controleur'}">${worker.role === 'preparateur' ? 'محضّر' : 'مراقب'}</span>`;
+
+    let roleBadgeClass = 'badge-preparator';
+    let roleLabel = 'محضّر';
+    if (worker.role === 'controleur') { roleBadgeClass = 'badge-controleur'; roleLabel = 'مراقب'; }
+    if (worker.role === 'directeur') { roleBadgeClass = 'badge-success'; roleLabel = 'مسؤول'; }
+
+    statusVal.innerHTML = `${worker.name} <span class="badge ${roleBadgeClass}">${roleLabel}</span>`;
     logoutBtn.style.display = "inline-block";
 
     // Update Action Panel on Scanning page
@@ -534,33 +540,25 @@ function setupActiveWorker(worker) {
 
     const formPrep = document.getElementById("form-preparateur");
     const formCtrl = document.getElementById("form-controleur-info");
+    const formDir = document.getElementById("form-directeur");
+
+    formPrep.style.display = "none";
+    formCtrl.style.display = "none";
+    formDir.style.display = "none";
 
     if (worker.role === 'preparateur') {
         scannedRole.textContent = "مُحضِّر (Préparateur)";
         scannedRole.className = "badge badge-preparator";
         formPrep.style.display = "block";
-        formCtrl.style.display = "none";
-    } else {
+    } else if (worker.role === 'controleur') {
         scannedRole.textContent = "مُراقِب (Contrôleur)";
         scannedRole.className = "badge badge-controleur";
-        formPrep.style.display = "none";
         formCtrl.style.display = "block";
-
-        // Update active controller in Verification tab
         updateActiveControllerUI();
-
-        // Populate Delegate Dropdown (Rule 3)
-        const delegateSelect = document.getElementById("delegate-preparateur");
-        if (delegateSelect) {
-            const assignedPreparers = workers.filter(w => w.role === 'preparateur' && w.controllerId === worker.id);
-            if (assignedPreparers.length > 0) {
-                delegateSelect.innerHTML = assignedPreparers.map(p => `<option value="${p.id}">${p.name} (${p.id})</option>`).join("");
-                document.querySelector(".controller-delegate-section").style.display = "block";
-            } else {
-                delegateSelect.innerHTML = '<option value="">لا يوجد محضّرين تابعين لك</option>';
-                document.querySelector(".controller-delegate-section").style.display = "none";
-            }
-        }
+    } else if (worker.role === 'directeur') {
+        scannedRole.textContent = "مسؤول (Directeur)";
+        scannedRole.className = "badge badge-success";
+        formDir.style.display = "block";
     }
 
     // Play a subtle notification sound (web audio API) if user scans successfully
@@ -580,12 +578,19 @@ function clearActiveWorker() {
     document.getElementById("worker-scan-result").style.display = "none";
     document.getElementById("form-preparateur").style.display = "none";
     document.getElementById("form-controleur-info").style.display = "none";
+    document.getElementById("form-directeur").style.display = "none";
 
     // Reset forms inputs
     document.getElementById("prep-lines-count").value = "";
     document.getElementById("prep-order-ref").value = "";
-    const badge = document.getElementById("scanned-order-badge");
-    if (badge) { badge.style.display = "none"; badge.textContent = ""; }
+    if (document.getElementById("scanned-order-badge")) document.getElementById("scanned-order-badge").style.display = "none";
+
+    document.getElementById("dir-order-ref").value = "";
+    document.getElementById("dir-lines-count").value = "";
+
+    document.getElementById("ctrl-order-ref").value = "";
+    document.getElementById("ctrl-order-details").style.display = "none";
+    if (document.getElementById("ctrl-order-badge")) document.getElementById("ctrl-order-badge").style.display = "none";
 
     // Reset scanner hint and cooldown for next scan session
     lastScannedCode = null;
@@ -745,36 +750,45 @@ function handleWorkerIdentification(workerCode) {
     lastScanTime = now;
 
     // === SMART DUAL-MODE SCAN ===
-    // If a PREPARATEUR is already logged in, treat new scan as an ORDER QR code
-    if (activeWorker && activeWorker.role === 'preparateur') {
-        // Check if the scanned code matches an existing worker (e.g. accident)
+    // If ANY worker is already logged in, treat new scan as an ORDER QR code (unless it's a worker QR)
+    if (activeWorker) {
         const isWorker = workers.find(w => w.id.trim().toUpperCase() === cleanCode.toUpperCase());
         if (isWorker) {
             // It IS another worker: log out current and log in the new one
-            lastScannedCode = null; // reset cooldown for new worker
+            lastScannedCode = null;
             setupActiveWorker(isWorker);
             return;
         }
 
         // Otherwise: treat the code as an ORDER/reference number
-        const refInput = document.getElementById("prep-order-ref");
-        const badge = document.getElementById("scanned-order-badge");
-        if (refInput) {
-            refInput.value = cleanCode;
-            if (badge) {
-                badge.textContent = `✔ طلبية ممسوحة: ${cleanCode}`;
-                badge.style.display = "inline-block";
+        playBeep();
+
+        if (activeWorker.role === 'directeur') {
+            const refInput = document.getElementById("dir-order-ref");
+            if (refInput) {
+                refInput.value = cleanCode;
+                refInput.style.borderColor = "var(--color-green)";
+                setTimeout(() => refInput.style.borderColor = "", 2000);
             }
-            refInput.style.borderColor = "var(--color-green)";
-            refInput.style.boxShadow = "0 0 10px var(--color-green-glow)";
-            setTimeout(() => {
-                refInput.style.borderColor = "";
-                refInput.style.boxShadow = "";
-            }, 2000);
-            playBeep();
-            // Update camera overlay message
-            updateScannerHint('order-done');
+        } else if (activeWorker.role === 'preparateur') {
+            const refInput = document.getElementById("prep-order-ref");
+            if (refInput) {
+                refInput.value = cleanCode;
+                refInput.style.borderColor = "var(--color-green)";
+                setTimeout(() => refInput.style.borderColor = "", 2000);
+                lookupOrderForPrep(); // Lookup the lines
+            }
+        } else if (activeWorker.role === 'controleur') {
+            const refInput = document.getElementById("ctrl-order-ref");
+            if (refInput) {
+                refInput.value = cleanCode;
+                refInput.style.borderColor = "var(--color-green)";
+                setTimeout(() => refInput.style.borderColor = "", 2000);
+                lookupOrderForCtrl(); // Direct confirmation
+            }
         }
+
+        updateScannerHint('order-done');
         return;
     }
 
@@ -782,10 +796,7 @@ function handleWorkerIdentification(workerCode) {
     const worker = workers.find(w => w.id.trim().toUpperCase() === cleanCode.toUpperCase());
     if (worker) {
         setupActiveWorker(worker);
-        // After worker login, show hint to scan the order
-        if (worker.role === 'preparateur') {
-            updateScannerHint('scan-order');
-        }
+        updateScannerHint('scan-order');
     } else {
         alert("المعرف أو الرمز غير مسجل في قاعدة البيانات: " + cleanCode);
         lastScannedCode = null; // allow retry
@@ -799,7 +810,7 @@ function updateScannerHint(mode) {
     if (mode === 'scan-order') {
         tipEl.innerHTML = `<strong style="color: var(--color-green); font-size: 0.9rem;">✔ تم التعرف على العامل! الآن وجّه كاميرا نحو رمز QR الخاص بالطلبية لمسحه تلقائياً.</strong>`;
     } else if (mode === 'order-done') {
-        tipEl.innerHTML = `<strong style="color: var(--color-teal); font-size: 0.9rem;">✔ تم مسح رمز الطلبية! أدخل عدد الأسطر واضغط تسجيل.</strong>`;
+        tipEl.innerHTML = `<strong style="color: var(--color-teal); font-size: 0.9rem;">✔ تم مسح رمز الطلبية بنجاح!</strong>`;
     } else {
         tipEl.innerHTML = `وجه رمز الـ QR الخاص بك نحو الكاميرا ليتم قراءته تلقائياً.`;
     }
@@ -834,131 +845,176 @@ function handleManualScanSubmit() {
 }
 
 // ==========================================================================
-// WORKFLOW ACTIONS: PREPARATIONS & VERIFICATIONS
+// WORKFLOW ACTIONS: PREPARATIONS & VERIFICATIONS (NEW 3-STEP WORKFLOW)
 // ==========================================================================
-function submitPreparation() {
-    if (!activeWorker || activeWorker.role !== 'preparateur') {
-        alert("خطأ: يجب تسجيل دخول عامل بصفة مُحضِّر أولاً.");
-        return;
-    }
 
-    const linesInput = document.getElementById("prep-lines-count");
-    const refInput = document.getElementById("prep-order-ref");
+function submitDirecteurOrder() {
+    if (!activeWorker || activeWorker.role !== 'directeur') return;
+
+    const linesInput = document.getElementById("dir-lines-count");
+    const refInput = document.getElementById("dir-order-ref");
 
     const lines = parseInt(linesInput.value);
-    const reference = refInput.value.trim();
+    const reference = refInput.value.trim().toUpperCase();
 
-    if (!reference) {
-        alert("يرجى إدخال رقم الطلبية أو مسح رمز الـ QR الخاص بها أولاً.");
-        refInput.focus();
-        return;
-    }
+    if (!reference) return alert("يرجى إدخال رقم الطلبية أولاً.");
+    if (isNaN(lines) || lines <= 0) return alert("يرجى إدخال عدد أسطر صحيح.");
 
-    if (isNaN(lines) || lines <= 0) {
-        alert("يرجى إدخال عدد أسطر صحيح (أكبر من 0).");
-        linesInput.focus();
-        return;
-    }
-
-    // Rule 1: Prevent Order Duplication
-    const isDuplicate = operations.some(op => op.reference && op.reference.toUpperCase() === reference.toUpperCase());
-    if (isDuplicate) {
-        alert("خطأ (Error): لقد تم تسجيل هذه الطلبية من قبل. لا يمكن تكرار الطلبية مرتين!");
-        return;
-    }
+    // Prevent Order Duplication globally
+    const isDuplicate = operations.some(op => op.reference && op.reference.toUpperCase() === reference);
+    if (isDuplicate) return alert("خطأ: تم إدخال هذه الطلبية من قبل.");
 
     const newOp = {
         id: `OP-${Date.now()}`,
-        workerId: activeWorker.id,
-        workerName: activeWorker.name,
-        lines: lines,
         reference: reference,
-        timestamp: new Date().toISOString(),
-        status: "pending",
+        lines: lines,
+        status: "created",
+        workerId: null,
+        workerName: null,
         controllerId: null,
         controllerName: null,
-        controlledAt: null
-    };
-
-    operations.unshift(newOp); // Add to the top of logs
-    saveDatabase();
-
-    // Reset inputs and log out worker automatically for security & shared device usage
-    alert(`تم بنجاح تسجيل تحضير ${lines} سطر للطلبية ${reference}. العملية في انتظار مراجعة المراقب.`);
-    clearActiveWorker();
-
-    // Refresh stats & tables
-    renderAllViews();
-
-    // Switch to dashboard to see results
-    switchTab('dashboard');
-}
-
-function submitDelegatedPreparation() {
-    if (!activeWorker || activeWorker.role !== 'controleur') {
-        alert("خطأ: يجب تسجيل دخول عامل بصفة مُراقِب أولاً.");
-        return;
-    }
-
-    const prepId = document.getElementById("delegate-preparateur").value;
-    const linesInput = document.getElementById("delegate-lines-count");
-    const refInput = document.getElementById("delegate-order-ref");
-
-    if (!prepId) {
-        alert("يرجى اختيار المحضر التابع لك أولاً.");
-        return;
-    }
-
-    const targetPreparateur = workers.find(w => w.id === prepId);
-    if (!targetPreparateur) return;
-
-    const lines = parseInt(linesInput.value);
-    const reference = refInput.value.trim();
-
-    if (!reference) {
-        alert("يرجى إدخال رقم الطلبية.");
-        refInput.focus();
-        return;
-    }
-
-    if (isNaN(lines) || lines <= 0) {
-        alert("يرجى إدخال عدد أسطر صحيح (أكبر من 0).");
-        linesInput.focus();
-        return;
-    }
-
-    // Rule 1: Prevent Order Duplication
-    const isDuplicate = operations.some(op => op.reference && op.reference.toUpperCase() === reference.toUpperCase());
-    if (isDuplicate) {
-        alert("خطأ (Error): لقد تم تسجيل هذه الطلبية من قبل. لا يمكن تكرار الطلبية مرتين!");
-        return;
-    }
-
-    const newOp = {
-        id: `OP-${Date.now()}`,
-        workerId: targetPreparateur.id,
-        workerName: targetPreparateur.name,
-        lines: lines,
-        reference: reference,
-        timestamp: new Date().toISOString(),
-        status: "pending", // Keep pending so it can be controlled, or auto control? Wait, maybe just pending.
-        controllerId: null,
-        controllerName: null,
-        controlledAt: null
+        controlledAt: null,
+        timestamp: new Date().toISOString()
     };
 
     operations.unshift(newOp);
     saveDatabase();
+    alert(`تم فتح الطلبية ${reference} بعدد ${lines} أسطر بنجاح.`);
 
-    alert(`تم بنجاح تسجيل تحضير ${lines} سطر للطلبية ${reference} نيابة عن المحضر: ${targetPreparateur.name}. العملية الآن معلقة.`);
-
-    // Clear inputs
-    linesInput.value = "";
+    // Reset view
     refInput.value = "";
+    linesInput.value = "";
 
-    // Refresh stats & tables
     renderAllViews();
-    switchTab('dashboard');
+}
+
+let pendingPrepOrderId = null;
+
+function lookupOrderForPrep() {
+    const ref = document.getElementById("prep-order-ref").value.trim().toUpperCase();
+    if (!ref) return;
+
+    // Find an unassigned order created by directeur
+    const order = operations.find(op => op.reference && op.reference.toUpperCase() === ref && op.status === "created");
+
+    const badge = document.getElementById("scanned-order-badge");
+    const linesInput = document.getElementById("prep-lines-count");
+    const btnSubmit = document.getElementById("btn-prep-submit");
+
+    if (order) {
+        pendingPrepOrderId = order.id;
+        linesInput.value = order.lines;
+        btnSubmit.disabled = false;
+        if (badge) {
+            badge.style.backgroundColor = "hsla(142, 70%, 45%, 0.1)";
+            badge.style.color = "var(--color-green)";
+            badge.style.borderColor = "var(--color-green)";
+            badge.style.display = "inline-block";
+            badge.innerHTML = `<i class="fa-solid fa-check"></i> الطلبية مسجلة ومتاحة للتحضير`;
+        }
+    } else {
+        pendingPrepOrderId = null;
+        linesInput.value = "";
+        btnSubmit.disabled = true;
+        // Check if assigned somewhere else
+        const exists = operations.find(op => op.reference && op.reference.toUpperCase() === ref);
+        if (badge) {
+            badge.style.backgroundColor = "hsla(0, 85%, 60%, 0.1)";
+            badge.style.color = "var(--color-danger)";
+            badge.style.borderColor = "var(--color-danger)";
+            badge.style.display = "inline-block";
+            if (exists) {
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> هذه الطلبية مأخوذة أو محجوزة مسبقاً!`;
+            } else {
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> الطلبية غير موجودة! يجب على المسؤول إدخالها أولاً.`;
+            }
+        }
+    }
+}
+
+function submitPreparation() {
+    if (!activeWorker || activeWorker.role !== 'preparateur') return;
+    if (!pendingPrepOrderId) return alert("لم يتم العثور على طلبية صحيحة مسبقاً.");
+
+    const order = operations.find(op => op.id === pendingPrepOrderId);
+    if (!order || order.status !== "created") return;
+
+    order.workerId = activeWorker.id;
+    order.workerName = activeWorker.name;
+    order.status = "pending";
+    order.timestamp = new Date().toISOString(); // Update timestamp to prep time
+
+    saveDatabase();
+    alert(`تم تأكيد استلامك وتحضيرك للطلبية بنجاح!`);
+
+    clearActiveWorker(); // Logout auto for shared phone mapping
+    renderAllViews();
+}
+
+function lookupOrderForCtrl() {
+    if (!activeWorker || activeWorker.role !== 'controleur') return;
+
+    const ref = document.getElementById("ctrl-order-ref").value.trim().toUpperCase();
+    if (!ref) return;
+
+    // Find a pending order (prepared)
+    const order = operations.find(op => op.reference && op.reference.toUpperCase() === ref && op.status === "pending");
+
+    const badge = document.getElementById("ctrl-order-badge");
+    const detailsWrap = document.getElementById("ctrl-order-details");
+
+    if (order) {
+        document.getElementById("ctrl-prep-name").textContent = order.workerName || "مجهول";
+        document.getElementById("ctrl-lines-count").textContent = order.lines;
+        detailsWrap.style.display = "block";
+
+        if (badge) {
+            badge.style.backgroundColor = "hsla(142, 70%, 45%, 0.1)";
+            badge.style.color = "var(--color-green)";
+            badge.style.borderColor = "var(--color-green)";
+            badge.style.border = "1px solid var(--color-green)";
+            badge.style.display = "inline-block";
+            badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري تأكيد الطلبية للمراقب...`;
+        }
+
+        // Auto-confirm logic upon viewing
+        setTimeout(() => {
+            order.controllerId = activeWorker.id;
+            order.controllerName = activeWorker.name;
+            order.status = "controlled";
+            order.controlledAt = new Date().toISOString();
+
+            saveDatabase();
+            playBeep();
+
+            setTimeout(() => {
+                alert(`✔ تم تأكيد ومراقبة الطلبية ${order.reference} مباشرة بنجاح!`);
+                clearActiveWorker();
+                renderAllViews();
+            }, 50); // Small UI buffer
+
+        }, 1200); // 1.2s delay for Controller to review the displayed info
+
+    } else {
+        detailsWrap.style.display = "none";
+        const exists = operations.find(op => op.reference && op.reference.toUpperCase() === ref);
+        if (badge) {
+            badge.style.backgroundColor = "hsla(38, 90%, 55%, 0.15)";
+            badge.style.color = "var(--color-amber)";
+            badge.style.borderColor = "var(--color-amber)";
+            badge.style.border = "1px solid var(--color-amber)";
+            badge.style.display = "inline-block";
+
+            if (!exists) {
+                badge.innerHTML = `<i class="fa-solid fa-xmark"></i> لم يتم العثور على الطلبية مطلقاً!`;
+                badge.style.color = "var(--color-danger)";
+            } else if (exists.status === "created") {
+                badge.innerHTML = `<i class="fa-solid fa-clock"></i> لم يستلمها أي محضر بعد!`;
+            } else if (exists.status === "controlled") {
+                badge.innerHTML = `<i class="fa-solid fa-shield-check"></i> الطلبية تمت مراقبتها وتأكيدها مسبقاً!`;
+            }
+        }
+    }
 }
 
 // Selecting operations to validate

@@ -129,11 +129,12 @@
                     <i class="fa-solid fa-chart-line"></i>
                     <span>الرئيسية</span>
                 </a>
-                <a href="#scanner" class="nav-item" onclick="switchTab('scanner')" data-role="controleur,directeur">
+                <a href="#scanner" class="nav-item" onclick="switchTab('scanner')"
+                    data-role="controleur,directeur,preparateur">
                     <i class="fa-solid fa-qrcode"></i>
                     <span>تسجيل العمل (QR)</span>
                 </a>
-                <a href="#control" class="nav-item" onclick="switchTab('control')" data-role="controleur,directeur">
+                <a href="#control" class="nav-item" onclick="switchTab('control')" data-role="directeur">
                     <i class="fa-solid fa-square-check"></i>
                     <span>المراقبة والتأكيد</span>
                 </a>
@@ -338,67 +339,83 @@
                                     </div>
                                 </div>
 
-                                <!-- FORM FOR PREPARATEUR -->
-                                <div id="form-preparateur" class="worker-action-form" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="prep-lines-count"><i class="fa-solid fa-list-ol"></i> عدد الأسطر
-                                            المحضرة (Nombre de lignes):</label>
-                                        <input type="number" id="prep-lines-count" class="form-control" min="1"
-                                            placeholder="أدخل عدد الأسطر المنجزة...">
+                                <!-- FORM FOR DIRECTEUR (Create Order) -->
+                                <div id="form-directeur" class="worker-action-form" style="display: none;">
+                                    <div class="info-alert info-alert-purple">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                        <p>أنت الآن بصلاحية <strong>مسؤول (Directeur)</strong>.</p>
                                     </div>
-
                                     <div class="form-group">
-                                        <label for="prep-order-ref"><i class="fa-solid fa-receipt"></i> رقم الطلبية (أو
-                                            امسح QR الطلبية):</label>
-                                        <input type="text" id="prep-order-ref" class="form-control"
-                                            placeholder="مثال: Cmd-2026-004 أو امسح كود الطلبية...">
-                                        <span id="scanned-order-badge" class="badge"
-                                            style="display: none; margin-top: 5px; background-color: var(--color-green-glow); color: var(--color-green); border: 1px solid var(--color-green); align-self: flex-start; padding: 4px 10px; border-radius: 6px;"></span>
+                                        <label for="dir-order-ref"><i class="fa-solid fa-receipt"></i> امسح QR الطلبية
+                                            (أو اكتب الرقم):</label>
+                                        <input type="text" id="dir-order-ref" class="form-control"
+                                            placeholder="امسح كود الطلبية...">
                                     </div>
-
-                                    <button class="btn btn-success btn-block btn-large" onclick="submitPreparation()">
-                                        <i class="fa-solid fa-save"></i> تسجيل وتأكيد العملية
+                                    <div class="form-group">
+                                        <label for="dir-lines-count"><i class="fa-solid fa-list-ol"></i> عدد الأسطر في
+                                            هذه الطلبية:</label>
+                                        <input type="number" id="dir-lines-count" class="form-control" min="1"
+                                            placeholder="أدخل عدد الأسطر للطلبية...">
+                                    </div>
+                                    <button class="btn btn-primary btn-block btn-large"
+                                        onclick="submitDirecteurOrder()">
+                                        <i class="fa-solid fa-plus-circle"></i> تسجيل الطلبية الجديدة بالنظام
                                     </button>
                                 </div>
 
-                                <!-- NOTIFICATION FOR CONTROLEUR -->
-                                <div id="form-controleur-info" class="worker-action-form text-center"
-                                    style="display: none;">
+                                <!-- FORM FOR PREPARATEUR (Claim Order) -->
+                                <div id="form-preparateur" class="worker-action-form" style="display: none;">
                                     <div class="info-alert info-alert-purple">
                                         <i class="fa-solid fa-circle-info"></i>
-                                        <p>مرحباً بك بصفتك <strong>مُراقِباً (Contrôleur)</strong>.</p>
+                                        <p>امسح رمز الطلبية التي سجلها المسؤول لتستلمها وتبدأ تحضيرها.</p>
                                     </div>
-                                    <button class="btn btn-purple btn-large btn-block" style="margin-bottom: 20px;"
-                                        onclick="switchTab('control')">
-                                        <i class="fa-solid fa-square-check"></i> الانتقال لجدول المراقبة
+                                    <div class="form-group">
+                                        <label for="prep-order-ref"><i class="fa-solid fa-receipt"></i> امسح QR
+                                            الطلبية:</label>
+                                        <input type="text" id="prep-order-ref" class="form-control"
+                                            placeholder="امسح كود الطلبية هنا..." onchange="lookupOrderForPrep()">
+                                        <span id="scanned-order-badge" class="badge"
+                                            style="display: none; margin-top: 5px; background-color: var(--color-green-glow); color: var(--color-green); border: 1px solid var(--color-green); padding: 4px 10px; border-radius: 6px;"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="prep-lines-count"><i class="fa-solid fa-list-ol"></i> عدد الأسطر
+                                            (ثابت من المسؤول):</label>
+                                        <input type="number" id="prep-lines-count" class="form-control" readonly
+                                            style="opacity: 0.7; cursor: not-allowed; font-weight: bold; color: var(--color-green);">
+                                    </div>
+                                    <button class="btn btn-success btn-block btn-large" id="btn-prep-submit"
+                                        onclick="submitPreparation()" disabled>
+                                        <i class="fa-solid fa-save"></i> تأكيد استلام التحضير
                                     </button>
+                                </div>
 
-                                    <!-- DELEGATE SECTION (RULE 3) -->
-                                    <div class="controller-delegate-section"
-                                        style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; text-align: right;">
-                                        <h4 style="margin-bottom: 10px; color: var(--color-teal);"><i
-                                                class="fa-solid fa-people-arrows"></i> تسجيل عملية لصالح محضر تابع لك
-                                        </h4>
-                                        <div class="form-group">
-                                            <label for="delegate-preparateur">اختر المحضر:</label>
-                                            <select id="delegate-preparateur" class="form-control">
-                                                <!-- Populated dynamically -->
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="delegate-lines-count">عدد الأسطر المحضرة:</label>
-                                            <input type="number" id="delegate-lines-count" class="form-control" min="1"
-                                                placeholder="أدخل عدد الأسطر...">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="delegate-order-ref">رقم الطلبية:</label>
-                                            <input type="text" id="delegate-order-ref" class="form-control"
-                                                placeholder="رقم الطلبية...">
-                                        </div>
-                                        <button class="btn btn-success btn-block"
-                                            onclick="submitDelegatedPreparation()">
-                                            <i class="fa-solid fa-save"></i> تسجيل العملية عن المحضر
-                                        </button>
+                                <!-- FORM FOR CONTROLEUR (Verify Order) -->
+                                <div id="form-controleur-info" class="worker-action-form" style="display: none;">
+                                    <div class="info-alert info-alert-purple">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                        <p>امسح رمز الطلبية التي اكتمل تحضيرها ليتم <strong>تأكيدها مباشرة</strong>
+                                            وتلقائياً.</p>
+                                    </div>
+                                    <div class="form-group" style="display: none;">
+                                        <label for="ctrl-order-ref"><i class="fa-solid fa-receipt"></i> امسح QR
+                                            الطلبية:</label>
+                                        <input type="text" id="ctrl-order-ref" class="form-control"
+                                            placeholder="امسح كود الطلبية هنا..." onchange="lookupOrderForCtrl()">
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <span id="ctrl-order-badge" class="badge"
+                                            style="display: none; margin: 10px auto; padding: 6px 15px; border-radius: 6px; font-size: 1rem;"></span>
+                                    </div>
+
+                                    <div id="ctrl-order-details"
+                                        style="display: none; background: hsla(222,47%,20%,0.5); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--color-teal-glow);">
+                                        <p style="margin-bottom: 8px; font-size: 0.95rem;"><strong>المحضر:</strong>
+                                            <span id="ctrl-prep-name"
+                                                style="color: var(--color-teal); font-weight: bold;"></span>
+                                        </p>
+                                        <p style="font-size: 0.95rem;"><strong>عدد الأسطر:</strong> <span
+                                                id="ctrl-lines-count"
+                                                style="color: var(--color-amber); font-weight: bold;"></span></p>
                                     </div>
                                 </div>
                             </div>
