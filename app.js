@@ -47,11 +47,13 @@ function initDatabase() {
     try {
         if (localStorage.getItem("pharma_workers")) {
             workers = JSON.parse(localStorage.getItem("pharma_workers"));
+            workers = (workers || []).filter(w => w !== null && typeof w === 'object');
         } else {
             workers = [...defaultWorkers];
         }
         if (localStorage.getItem("pharma_operations")) {
             operations = JSON.parse(localStorage.getItem("pharma_operations"));
+            operations = (operations || []).filter(op => op !== null && typeof op === 'object');
         } else {
             operations = [...defaultOperations];
         }
@@ -74,6 +76,7 @@ function initDatabase() {
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 workers = Array.isArray(data) ? data : Object.values(data);
+                workers = workers.filter(w => w !== null && typeof w === 'object');
                 localStorage.setItem("pharma_workers", JSON.stringify(workers));
             } else {
                 window.db.ref('pharma_workers').set(workers);
@@ -85,8 +88,13 @@ function initDatabase() {
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 operations = Array.isArray(data) ? data : Object.values(data);
+                operations = operations.filter(op => op !== null && typeof op === 'object');
                 // Sort by timestamp descending to maintain order (newest first)
-                operations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                operations.sort((a, b) => {
+                    let tA = (a && a.timestamp) ? new Date(a.timestamp) : 0;
+                    let tB = (b && b.timestamp) ? new Date(b.timestamp) : 0;
+                    return tB - tA;
+                });
                 localStorage.setItem("pharma_operations", JSON.stringify(operations));
             }
             renderAllViews();
@@ -308,7 +316,7 @@ function renderStats() {
     const today = new Date().toDateString();
 
     // Filter operations today (exclude ones just created by directeur without a preparateur yet)
-    const opsToday = operations.filter(op => new Date(op.timestamp).toDateString() === today && op.status !== 'created' && op.workerId);
+    const opsToday = operations.filter(op => op && op.timestamp && new Date(op.timestamp).toDateString() === today && op.status !== 'created' && op.workerId);
 
     // Lines prepared today
     const linesPrepared = opsToday.reduce((sum, op) => sum + op.lines, 0);
