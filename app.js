@@ -912,14 +912,34 @@ function lookupOrderForPrep() {
     if (order) {
         pendingPrepOrderId = order.id;
         linesInput.value = order.lines;
-        btnSubmit.disabled = false;
+        if (btnSubmit) btnSubmit.style.display = "none";
+
         if (badge) {
             badge.style.backgroundColor = "hsla(142, 70%, 45%, 0.1)";
             badge.style.color = "var(--color-green)";
             badge.style.borderColor = "var(--color-green)";
+            badge.style.border = "1px solid var(--color-green)";
             badge.style.display = "inline-block";
-            badge.innerHTML = `<i class="fa-solid fa-check"></i> الطلبية مسجلة ومتاحة للتحضير`;
+            badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري تأكيد استلام التحضير...`;
         }
+
+        // Auto-confirm logic upon viewing
+        setTimeout(() => {
+            order.workerId = activeWorker.id;
+            order.workerName = activeWorker.name;
+            order.status = "pending";
+            order.timestamp = new Date().toISOString();
+
+            saveDatabase();
+            playBeep();
+
+            setTimeout(() => {
+                alert(`✔ تم استلام وتحضير الطلبية ${order.reference} مباشرة بنجاح!`);
+                clearActiveWorker();
+                renderAllViews();
+            }, 50);
+
+        }, 1200);
     } else {
         pendingPrepOrderId = null;
         linesInput.value = "";
@@ -941,22 +961,7 @@ function lookupOrderForPrep() {
 }
 
 function submitPreparation() {
-    if (!activeWorker || activeWorker.role !== 'preparateur') return;
-    if (!pendingPrepOrderId) return alert("لم يتم العثور على طلبية صحيحة مسبقاً.");
-
-    const order = operations.find(op => op.id === pendingPrepOrderId);
-    if (!order || order.status !== "created") return;
-
-    order.workerId = activeWorker.id;
-    order.workerName = activeWorker.name;
-    order.status = "pending";
-    order.timestamp = new Date().toISOString(); // Update timestamp to prep time
-
-    saveDatabase();
-    alert(`تم تأكيد استلامك وتحضيرك للطلبية بنجاح!`);
-
-    clearActiveWorker(); // Logout auto for shared phone mapping
-    renderAllViews();
+    // Obsolete - Automated now.
 }
 
 function lookupOrderForCtrl() {
@@ -1095,13 +1100,7 @@ function renderPendingTasksTable() {
     let pendingTasks = operations.filter(op => op.status === 'pending');
 
     // Role-based filtering:
-    // If the logged in user is a controller, ONLY show tasks from preparateurs assigned to them.
-    if (activeWorker && activeWorker.role === 'controleur') {
-        pendingTasks = pendingTasks.filter(op => {
-            const preparateur = workers.find(w => w.id === op.workerId);
-            return preparateur && preparateur.controllerId === activeWorker.id;
-        });
-    }
+    // If the logged in user is a controller, show ALL tasks from all preparateurs (Global validation).
 
     if (pendingTasks.length === 0) {
         tbody.innerHTML = `
@@ -1148,16 +1147,7 @@ function renderPendingTasksTable() {
 // WORKER MANAGEMENT & NEW REGISTER
 // ==========================================================================
 function toggleAssignedController(select) {
-    const group = document.getElementById("assign-controller-group");
-    const input = document.getElementById("worker-assigned-controller");
-    if (select.value === 'preparateur') {
-        group.style.display = "block";
-        input.required = true;
-    } else {
-        group.style.display = "none";
-        input.required = false;
-        input.value = "";
-    }
+    // Disabled assignment logic
 }
 
 function populateControllersDropdown() {
@@ -1201,19 +1191,7 @@ function handleAddWorker(event) {
 
     if (!name) return;
 
-    if (role === 'preparateur') {
-        if (!assignedControllerId) {
-            alert("يرجى اختيار المراقب المسؤول عن هذا المحضر.");
-            return;
-        }
-
-        // Rule 2: Limit controllers to max 4 preparers
-        const assignedCount = workers.filter(w => w.role === 'preparateur' && w.controllerId === assignedControllerId).length;
-        if (assignedCount >= 4) {
-            alert("خطأ: هذا المراقب مسؤول بالفعل عن 4 محاضر (الحد الأقصى). يرجى اختيار مراقب آخر.");
-            return;
-        }
-    }
+    // No specific controller assignment needed anymore
 
     let workerId = "";
     if (useCustomIdCheckbox && useCustomIdCheckbox.checked) {
@@ -1245,7 +1223,7 @@ function handleAddWorker(event) {
         id: workerId,
         name: name,
         role: role,
-        controllerId: role === 'preparateur' ? assignedControllerId : null,
+        controllerId: null,
         createdAt: new Date().toISOString()
     };
 
@@ -1353,12 +1331,7 @@ function openEditWorkerModal(workerId) {
     controllerSelect.innerHTML = '<option value="">-- اختر مراقباً --</option>' +
         controllers.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
 
-    if (worker.role === 'preparateur' && worker.controllerId) {
-        controllerSelect.value = worker.controllerId;
-        document.getElementById("edit-assign-controller-group").style.display = "block";
-    } else {
-        document.getElementById("edit-assign-controller-group").style.display = "none";
-    }
+    // Assignment logic removed
 
     document.getElementById("edit-worker-modal").classList.add("active");
 }
@@ -1368,12 +1341,7 @@ function closeEditModal() {
 }
 
 function toggleEditAssignedController(select) {
-    const group = document.getElementById("edit-assign-controller-group");
-    if (select.value === 'preparateur') {
-        group.style.display = "block";
-    } else {
-        group.style.display = "none";
-    }
+    // Disabled assignment logic
 }
 
 function saveWorkerEdit() {
@@ -1390,22 +1358,11 @@ function saveWorkerEdit() {
         return;
     }
 
-    if (newRole === 'preparateur') {
-        if (!newControllerId) {
-            alert("يرجى اختيار المراقب المسؤول عن هذا المحضر.");
-            return;
-        }
-
-        const assignedCount = workers.filter(w => w.role === 'preparateur' && w.controllerId === newControllerId && w.id !== workerId).length;
-        if (assignedCount >= 4) {
-            alert("خطأ: هذا المراقب مسؤول بالفعل عن 4 محاضر (الحد الأقصى). يرجى اختيار مراقب آخر.");
-            return;
-        }
-    }
+    // No specific controller assignment needed anymore
 
     workers[workerIndex].name = newName;
     workers[workerIndex].role = newRole;
-    workers[workerIndex].controllerId = newRole === 'preparateur' ? newControllerId : null;
+    workers[workerIndex].controllerId = null;
 
     saveDatabase();
     renderAllViews();

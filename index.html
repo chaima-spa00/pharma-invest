@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharma INVESTE SPA - تتبع إنتاجية العمال</title>
+    <!-- Favicon -->
+    <link rel="icon" href="logo.png" type="image/png">
     <!-- Google Fonts: Cairo -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
@@ -39,26 +41,8 @@
     <div id="splash-screen" class="splash-container">
         <div class="splash-content">
 
-            <!-- Pure CSS Pharma Invest Logo -->
-            <div class="css-logo-wrap">
-                <div class="css-logo-symbol">
-                    <!-- Green stripes forming the P body -->
-                    <div class="p-stripes">
-                        <span></span><span></span><span></span>
-                        <span></span><span></span><span></span>
-                    </div>
-                    <!-- Red arc forming the right curve of P -->
-                    <div class="p-red-arc"></div>
-                    <!-- Green dot at top -->
-                    <div class="p-dot"></div>
-                    <!-- SPA label -->
-                    <span class="p-spa-label">SPA</span>
-                </div>
-                <div class="css-logo-text">
-                    <span class="logo-pharma">Pharma</span>
-                    <span class="logo-invest">Invest</span>
-                </div>
-            </div>
+            <img src="logo.png" alt="Pharma INVESTE SPA"
+                style="width: 250px; height: auto; max-width: 80vw; margin: 0 auto 30px; display: block;">
 
             <div class="splash-loader"></div>
         </div>
@@ -88,7 +72,8 @@
 
         <div class="login-card text-center">
             <div class="brand" style="margin-bottom: 20px;">
-                <i class="fa-solid fa-file-medical logo-icon" style="font-size: 3rem; color: var(--color-blue);"></i>
+                <img src="logo.png" alt="Pharma Invest Logo"
+                    style="width: 110px; height: auto; max-height: 120px; border-radius: 8px;">
                 <h1 style="color: white; margin-top: 10px;">Pharma <span class="accent-text">INVESTE</span></h1>
             </div>
             <i class="fa-solid fa-lock login-icon"
@@ -120,7 +105,8 @@
         <!-- Sidebar Navigation (Desktop) / Bottom Nav (Mobile) -->
         <aside class="sidebar">
             <div class="brand">
-                <i class="fa-solid fa-file-medical logo-icon"></i>
+                <img src="logo.png" alt="Logo"
+                    style="width: 45px; height: auto; border-radius: 4px; margin-left: 10px;">
                 <span class="brand-name">Pharma <span class="accent-text">INVESTE SPA</span></span>
             </div>
 
@@ -270,7 +256,7 @@
                             </div>
 
                             <!-- Scanner selection tabs (Camera vs Manual) -->
-                            <div class="scanner-toggle">
+                            <div class="scanner-toggle" style="display: none;">
                                 <button id="btn-mode-camera" class="toggle-btn active"
                                     onclick="setScannerMode('camera')">
                                     <i class="fa-solid fa-camera"></i> الكاميرا
@@ -384,7 +370,7 @@
                                             style="opacity: 0.7; cursor: not-allowed; font-weight: bold; color: var(--color-green);">
                                     </div>
                                     <button class="btn btn-success btn-block btn-large" id="btn-prep-submit"
-                                        onclick="submitPreparation()" disabled>
+                                        onclick="submitPreparation()" style="display: none;">
                                         <i class="fa-solid fa-save"></i> تأكيد استلام التحضير
                                     </button>
                                 </div>
@@ -500,7 +486,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group" id="assign-controller-group">
+                                <div class="form-group" id="assign-controller-group" style="display: none;">
                                     <label for="worker-assigned-controller">المراقب المسؤول عن هذا المحضر:</label>
                                     <select id="worker-assigned-controller" class="form-control">
                                         <!-- Populated dynamically -->
@@ -668,7 +654,8 @@
             <div class="modal-body text-center" id="printable-qr-area">
                 <div class="qr-print-card">
                     <div class="qr-card-logo">
-                        <i class="fa-solid fa-file-medical"></i>
+                        <img src="logo.png" alt="Logo"
+                            style="width: 40px; height: auto; border-radius: 4px; margin-left: 8px;">
                         <span>Pharma INVESTE SPA</span>
                     </div>
                     <h3 id="modal-worker-name" class="qr-card-name">اسم العامل</h3>
